@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f0">
+  <title>Grind and Grow — daily tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #343d35;
+      --muted: #838b80;
+      --line: #e5e9df;
+      --paper: #fffefa;
+      --canvas: #f5f6f0;
+      --green: #82977d;
+      --green-dark: #5d745b;
+      --green-soft: #edf2e9;
+      --peach: #f4e9e3;
+      --lavender: #f0edf2;
+      --yellow: #f4f1e4;
+      --danger: #ae706b;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      padding: 46px 20px 64px;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 12% 4%, rgba(225, 234, 219, .72), transparent 30rem),
+        radial-gradient(ellipse at 88% 16%, rgba(244, 226, 221, .56), transparent 28rem),
+        var(--canvas);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .page { width: min(100%, 540px); margin: 0 auto; }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 27px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--green-dark);
+      font-size: 14px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 27px;
+      height: 27px;
+      place-items: center;
+      border-radius: 9px;
+      background: var(--green-soft);
+      font-size: 16px;
+    }
+
+    .today {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 550;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(29px, 7vw, 37px);
+      font-weight: 650;
+      letter-spacing: -.045em;
+      line-height: 1.15;
+    }
+
+    .intro {
+      margin: 9px 0 28px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .card {
+      margin-top: 16px;
+      padding: 23px;
+      border: 1px solid rgba(226, 225, 218, .8);
+      border-radius: 18px;
+      background: rgba(255, 254, 250, .94);
+      box-shadow: 0 10px 28px rgba(66, 62, 48, .045);
+    }
+
+    .card-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -.02em;
+    }
+
+    .section-note {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .count-pill {
+      flex: none;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f0edf2;
+      color: #776d78;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      margin: 0 0 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .progress-track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #edf0e9;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #b5c5aa, #7f987b);
+      transition: width .25s ease;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 2px;
+      margin: 12px 0 15px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 45px;
+      padding: 6px 0;
+      border-bottom: 1px solid #f0efe9;
+    }
+
+    .task-check {
+      width: 19px;
+      height: 19px;
+      flex: none;
+      margin: 0;
+      accent-color: var(--green);
+      cursor: pointer;
+    }
+
+    .task-label {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+    }
+
+    .task-row.is-done .task-label {
+      color: #999e98;
+      text-decoration: line-through;
+      text-decoration-color: #b7beb6;
+    }
+
+    .icon-button {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      flex: none;
+      place-items: center;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #a2a69f;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .icon-button:hover { background: #f8eeeb; color: var(--danger); }
+
+    .add-form {
+      display: grid;
+      gap: 9px;
+    }
+
+    .spending-inputs {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px;
+      gap: 9px;
+    }
+
+    .text-input, .amount-input {
+      width: 100%;
+      min-width: 0;
+      height: 44px;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      outline: none;
+      background: #fff;
+      color: var(--ink);
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .text-input::placeholder, .amount-input::placeholder { color: #a5a9a3; }
+    .text-input:focus, .amount-input:focus {
+      border-color: #a8b89e;
+      box-shadow: 0 0 0 3px rgba(130, 151, 125, .14);
+    }
+
+    .add-button {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 91px;
+      height: 44px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--green);
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 650;
+      transition: background .15s ease, transform .15s ease;
+    }
+
+    .add-button:hover { background: var(--green-dark); }
+    .add-button:active { transform: scale(.98); }
+
+    .budget-start {
+      padding: 15px;
+      border-radius: 13px;
+      background: var(--yellow);
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      color: #777b6f;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .035em;
+      text-transform: uppercase;
+    }
+
+    .budget-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+    }
+
+    .budget-form .add-button { min-width: 101px; }
+    .spending-heading { margin: 20px 0 8px; font-size: 14px; font-weight: 650; }
+
+    .spending-list {
+      display: grid;
+      gap: 1px;
+      margin: 0 0 13px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .spending-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      border-bottom: 1px solid #f0efe9;
+    }
+
+    .spending-dot {
+      width: 8px;
+      height: 8px;
+      flex: none;
+      border-radius: 50%;
+      background: #cfaaa0;
+    }
+
+    .spending-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    .spending-amount { color: #667466; font-variant-numeric: tabular-nums; }
+    .spending-row .icon-button { width: 27px; height: 27px; font-size: 17px; }
+    .empty-state { padding: 13px 0; color: #a0a49e; font-size: 13px; }
+
+    .balance {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 17px;
+      padding: 15px 16px;
+      border-radius: 13px;
+      background: var(--green-soft);
+    }
+
+    .balance-label { color: #627568; font-size: 13px; font-weight: 600; }
+    .balance-amount {
+      color: var(--green-dark);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -.035em;
+      font-variant-numeric: tabular-nums;
+    }
+    .balance.is-over .balance-amount, .balance.is-over .balance-label { color: var(--danger); }
+    .balance.is-over { background: #f8ece9; }
+
+    .footnote {
+      margin: 17px 2px 0;
+      color: #9a9e97;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    @media (max-width: 440px) {
+      body { padding: 30px 15px 44px; }
+      .card { padding: 19px; }
+      .today { font-size: 12px; }
+      .add-button { min-width: 80px; padding: 0 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topline">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✿</span> Grind and Grow</div>
+      <time class="today" id="today"></time>
+    </div>
+
+    <header>
+      <h1>A little more in balance.</h1>
+      <p class="intro">Make a plan, spend with care, and take today one step at a time.</p>
+    </header>
+
+    <section class="card" aria-labelledby="tasks-title">
+      <div class="card-heading">
+        <div>
+          <h2 class="section-title" id="tasks-title">Today's to-dos</h2>
+          <p class="section-note">Small steps count, too.</p>
+        </div>
+        <span class="count-pill" id="task-count">0 tasks</span>
+      </div>
+
+      <div class="progress-meta">
+        <span>Progress</span>
+        <span id="progress-label">0% complete</span>
+      </div>
+      <div class="progress-track" id="progress-track" role="progressbar" aria-label="To-do list progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+
+      <ul class="task-list" id="task-list" aria-label="To-do items"></ul>
+
+      <form class="add-form task-add-form" id="task-form">
+        <label class="sr-only" for="task-input">Add a task</label>
+        <input class="text-input" id="task-input" name="task" type="text" maxlength="160" placeholder="What would you like to do?" autocomplete="off" required>
+        <button class="add-button" type="submit">Add task <span aria-hidden="true">+</span></button>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="budget-title">
+      <div class="card-heading">
+        <div>
+          <h2 class="section-title" id="budget-title">Daily budget</h2>
+          <p class="section-note">Keep an easy eye on where it goes.</p>
+        </div>
+        <span class="count-pill" id="spending-count">0 spent</span>
+      </div>
+
+      <div class="budget-start">
+        <label class="field-label" for="daily-budget">Money available today</label>
+        <form class="budget-form" id="budget-form">
+          <input class="amount-input" id="daily-budget" name="budget" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Money available today" required>
+          <button class="add-button" type="submit">Set budget</button>
+        </form>
+      </div>
+
+      <h3 class="spending-heading">Today's spending</h3>
+      <ul class="spending-list" id="spending-list" aria-label="Today's spending"></ul>
+      <form class="add-form spending-form" id="spending-form">
+        <div class="spending-inputs">
+          <label class="sr-only" for="spending-name">What did you spend on?</label>
+          <input class="text-input" id="spending-name" name="description" type="text" maxlength="100" placeholder="What did you spend on?" autocomplete="off" required>
+          <label class="sr-only" for="spending-amount">Spending amount</label>
+          <input class="amount-input" id="spending-amount" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Amount" required>
+        </div>
+        <button class="add-button" type="submit" aria-label="Add spending">Add spending <span aria-hidden="true">+</span></button>
+      </form>
+
+      <div class="balance" id="balance">
+        <span class="balance-label" id="balance-label">Remaining today</span>
+        <output class="balance-amount" id="balance-amount" aria-live="polite">0.00</output>
+      </div>
+    </section>
+
+    <p class="footnote">Your tracker stays saved on this device. Amounts are shown in your currency.</p>
+  </main>
+
+  <script>
+    (() => {
+      const storageKey = "daylight-tracker-v1";
+      const todayKey = new Date().toLocaleDateString("en-CA");
+      const state = loadState();
+      const dateFormatter = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+      document.getElementById("today").textContent = dateFormatter.format(new Date());
+      document.getElementById("today").dateTime = todayKey;
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+          if (!saved || saved.date !== new Date().toLocaleDateString("en-CA")) {
+            return { date: new Date().toLocaleDateString("en-CA"), tasks: [], budget: null, spending: [] };
+          }
+          return {
+            date: saved.date,
+            tasks: Array.isArray(saved.tasks) ? saved.tasks.filter(item => item && typeof item.id === "string" && typeof item.text === "string").map(item => ({ id: item.id, text: item.text, done: Boolean(item.done) })) : [],
+            budget: Number.isFinite(saved.budget) && saved.budget >= 0 ? saved.budget : null,
+            spending: Array.isArray(saved.spending) ? saved.spending.filter(item => item && typeof item.id === "string" && typeof item.name === "string" && Number.isFinite(item.amount) && item.amount > 0).map(item => ({ id: item.id, name: item.name, amount: item.amount })) : []
+          };
+        } catch (error) {
+          console.error("Could not load the saved tracker data.", error);
+          return { date: new Date().toLocaleDateString("en-CA"), tasks: [], budget: null, spending: [] };
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(state));
+        } catch (error) {
+          console.error("Could not save the tracker data.", error);
+        }
+      }
+
+      function money(value) {
+        return new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+      }
+
+      function makeId() {
+        return typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+
+      function renderTasks() {
+        const list = document.getElementById("task-list");
+        list.replaceChildren();
+        state.tasks.forEach(task => {
+          const row = document.createElement("li");
+          row.className = `task-row${task.done ? " is-done" : ""}`;
+
+          const checkbox = document.createElement("input");
+          checkbox.className = "task-check";
+          checkbox.type = "checkbox";
+          checkbox.id = `task-check-${task.id}`;
+          checkbox.checked = task.done;
+          checkbox.setAttribute("aria-label", `Mark ${task.text} ${task.done ? "not done" : "done"}`);
+          checkbox.addEventListener("change", () => {
+            task.done = checkbox.checked;
+            saveState();
+            renderTasks();
+            document.getElementById(checkbox.id).focus();
+          });
+
+          const label = document.createElement("label");
+          label.className = "task-label";
+          label.htmlFor = checkbox.id;
+          label.textContent = task.text;
+
+          const remove = document.createElement("button");
+          remove.className = "icon-button";
+          remove.type = "button";
+          remove.textContent = "×";
+          remove.setAttribute("aria-label", `Delete ${task.text}`);
+          remove.addEventListener("click", () => {
+            state.tasks = state.tasks.filter(item => item.id !== task.id);
+            saveState();
+            renderTasks();
+          });
+
+          row.append(checkbox, label, remove);
+          list.append(row);
+        });
+
+        const total = state.tasks.length;
+        const done = state.tasks.filter(task => task.done).length;
+        const percent = total === 0 ? 0 : Math.round(done / total * 100);
+        document.getElementById("task-count").textContent = `${total} ${total === 1 ? "task" : "tasks"}`;
+        document.getElementById("progress-label").textContent = `${percent}% complete`;
+        document.getElementById("progress-fill").style.width = `${percent}%`;
+        const progress = document.getElementById("progress-track");
+        progress.setAttribute("aria-valuenow", String(percent));
+        if (total === 0) {
+          const empty = document.createElement("li");
+          empty.className = "empty-state";
+          empty.textContent = "Your list is clear. Add a task to get started.";
+          list.append(empty);
+        }
+      }
+
+      function renderBudget() {
+        const list = document.getElementById("spending-list");
+        list.replaceChildren();
+        state.spending.forEach(item => {
+          const row = document.createElement("li");
+          row.className = "spending-row";
+          const dot = document.createElement("span");
+          dot.className = "spending-dot";
+          dot.setAttribute("aria-hidden", "true");
+          const name = document.createElement("span");
+          name.className = "spending-name";
+          name.textContent = item.name;
+          const amount = document.createElement("span");
+          amount.className = "spending-amount";
+          amount.textContent = money(item.amount);
+          const remove = document.createElement("button");
+          remove.className = "icon-button";
+          remove.type = "button";
+          remove.textContent = "×";
+          remove.setAttribute("aria-label", `Delete ${item.name} spending`);
+          remove.addEventListener("click", () => {
+            state.spending = state.spending.filter(entry => entry.id !== item.id);
+            saveState();
+            renderBudget();
+          });
+          row.append(dot, name, amount, remove);
+          list.append(row);
+        });
+
+        if (state.spending.length === 0) {
+          const empty = document.createElement("li");
+          empty.className = "empty-state";
+          empty.textContent = "No spending added yet.";
+          list.append(empty);
+        }
+
+        const spent = state.spending.reduce((sum, item) => sum + item.amount, 0);
+        const remaining = (state.budget ?? 0) - spent;
+        document.getElementById("spending-count").textContent = `${money(spent)} spent`;
+        document.getElementById("balance-amount").textContent = money(remaining);
+        document.getElementById("balance-label").textContent = remaining < 0 ? "Over budget by" : "Remaining today";
+        document.getElementById("balance").classList.toggle("is-over", remaining < 0);
+
+        const budgetInput = document.getElementById("daily-budget");
+        budgetInput.value = state.budget === null ? "" : String(state.budget);
+      }
+
+      document.getElementById("task-form").addEventListener("submit", event => {
+        event.preventDefault();
+        const input = document.getElementById("task-input");
+        const text = input.value.trim();
+        if (!text) return;
+        state.tasks.push({ id: makeId(), text, done: false });
+        saveState();
+        renderTasks();
+        input.value = "";
+        input.focus();
+      });
+
+      document.getElementById("budget-form").addEventListener("submit", event => {
+        event.preventDefault();
+        const input = document.getElementById("daily-budget");
+        const amount = input.valueAsNumber;
+        if (!Number.isFinite(amount) || amount < 0) {
+          input.focus();
+          return;
+        }
+        state.budget = Math.round(amount * 100) / 100;
+        saveState();
+        renderBudget();
+      });
+
+      document.getElementById("spending-form").addEventListener("submit", event => {
+        event.preventDefault();
+        const nameInput = document.getElementById("spending-name");
+        const amountInput = document.getElementById("spending-amount");
+        const name = nameInput.value.trim();
+        const amount = amountInput.valueAsNumber;
+        if (!name || !Number.isFinite(amount) || amount <= 0) {
+          (!name ? nameInput : amountInput).focus();
+          return;
+        }
+        state.spending.push({ id: makeId(), name, amount: Math.round(amount * 100) / 100 });
+        saveState();
+        renderBudget();
+        nameInput.value = "";
+        amountInput.value = "";
+        nameInput.focus();
+      });
+
+      renderTasks();
+      renderBudget();
+    })();
+  </script>
+</body>
+</html>
