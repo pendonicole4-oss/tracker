@@ -153,6 +153,33 @@
       transition: width .25s ease;
     }
 
+    .budget-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      margin: 16px 0 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .budget-progress-track {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #edf0e9;
+    }
+
+    .budget-progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #b5c5aa, #7f987b);
+      transition: width .25s ease;
+    }
+
+    .budget-progress-fill.is-over {
+      background: linear-gradient(90deg, #d8a4a0, #b96f6d);
+    }
+
     .task-list {
       display: grid;
       gap: 2px;
@@ -421,6 +448,14 @@
         </form>
       </div>
 
+      <div class="budget-progress-meta">
+        <span>Budget used</span>
+        <span id="budget-progress-label" aria-live="polite">No budget set</span>
+      </div>
+      <div class="budget-progress-track" id="budget-progress-track" role="progressbar" aria-label="Daily spending progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="budget-progress-fill" id="budget-progress-fill"></div>
+      </div>
+
       <h3 class="spending-heading">Today's spending</h3>
       <ul class="spending-list" id="spending-list" aria-label="Today's spending"></ul>
       <form class="add-form spending-form" id="spending-form">
@@ -579,11 +614,43 @@
         }
 
         const spent = state.spending.reduce((sum, item) => sum + item.amount, 0);
-        const remaining = (state.budget ?? 0) - spent;
+        const budget = state.budget ?? 0;
+        const remaining = budget > 0 ? budget - spent : 0;
+        const progressTrack = document.getElementById("budget-progress-track");
+        const progressFill = document.getElementById("budget-progress-fill");
+        const progressLabel = document.getElementById("budget-progress-label");
+        const budgetIsSet = Number.isFinite(budget) && budget > 0;
+        const isOverBudget = budgetIsSet && spent > budget;
+
+        if (!budgetIsSet) {
+          progressFill.style.width = "0%";
+          progressFill.classList.remove("is-over");
+          progressTrack.setAttribute("aria-valuenow", "0");
+          progressTrack.setAttribute("aria-label", "Daily spending progress is unavailable until a budget is set.");
+          progressLabel.textContent = "No budget set";
+        } else {
+          const percent = Math.min((spent / budget) * 100, 100);
+          progressFill.style.width = `${Math.round(percent)}%`;
+          progressFill.classList.toggle("is-over", isOverBudget);
+          progressTrack.setAttribute("aria-valuenow", String(Math.round(percent)));
+          progressTrack.setAttribute("aria-label", isOverBudget
+            ? `Spending is over the daily budget by ${money(spent - budget)}.`
+            : `Daily spending progress is ${Math.round(percent)} percent of the budget.`
+          );
+          progressLabel.textContent = isOverBudget ? `Over budget by ${money(spent - budget)}` : `${Math.round(percent)}% of budget used`;
+        }
+
         document.getElementById("spending-count").textContent = `${money(spent)} spent`;
         document.getElementById("balance-amount").textContent = money(remaining);
-        document.getElementById("balance-label").textContent = remaining < 0 ? "Over budget by" : "Remaining today";
-        document.getElementById("balance").classList.toggle("is-over", remaining < 0);
+
+        const hasBudget = state.budget !== null && state.budget > 0;
+        if (!hasBudget) {
+          document.getElementById("balance-label").textContent = "Set a budget";
+          document.getElementById("balance").classList.remove("is-over");
+        } else {
+          document.getElementById("balance-label").textContent = remaining < 0 ? "Over budget by" : "Remaining today";
+          document.getElementById("balance").classList.toggle("is-over", remaining < 0);
+        }
 
         const budgetInput = document.getElementById("daily-budget");
         budgetInput.value = state.budget === null ? "" : String(state.budget);
